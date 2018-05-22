@@ -1,5 +1,5 @@
 # Image-impainting-with-dcgan-pytorch
-project on image impatining based on context error with pytorch
+project on image impatining based on context error with pytorch.with exploration of dcgans.
 
 # TODO:
 
@@ -18,3 +18,9 @@ project on image impatining based on context error with pytorch
 [ ] transform image-impainting-with-dcgan to image-impainting-with-wgan
 
 [ ] fully test image-impainting-wgan
+
+# prerequisites
+see requirements.txt
+
+# Usage
+### install the required packages
