@@ -3,7 +3,7 @@ project on image impatining based on context error with pytorch.with exploration
 
 # TODO:
 
-[ ] implement naive dcgan with pytorch.
+[✓] implement naive dcgan with pytorch.
 
 [ ] fully test dcgan-pytorch
 
