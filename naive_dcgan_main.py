@@ -93,6 +93,8 @@ if torch.cuda.is_available() and not args.cuda:
     print("WANGING: you have a cuda device available,you may specify --cuda to enable it.")
 
 # prepare datasets
+# for these dataset,you should put dataset images in sub-directory;
+# for example: for celebA,root=~/dataset/celebA ;then images should lie in ~/dataset/celebA/celebA/
 if args.dataset in ["imagenet", "lfw", "custom_dataset","celeba"]:
     dataset = datasets.ImageFolder(args.dataset_root, transform=transforms.Compose([
         transforms.Resize(args.image_size),
