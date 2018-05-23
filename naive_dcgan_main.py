@@ -255,24 +255,6 @@ def train(n_epochs):
             # update parameters for G
             optim_G.step()
 
-            #----------------
-            # 因为判别网络的梯度可能会降为0，因此，尝试让生成网络多训练一次
-            # let's maximize logD(G(z))
-            generator.zero_grad()
-            # mark label real for G
-            batch_labels.fill_(label_real)
-            # 我们需要判别网络更新之后的判别结果,就像银行知道了假币的缺陷,那么制造假币的需要知道银行掌握的信息(判据)
-            batch_output_G = discriminator(fake_batch_images)
-            # compute loss for G
-            loss_G = criteria(batch_output_G, batch_labels)
-            # compute gradient for G
-            loss_G.backward()
-
-            loss_G_mean = loss_G.mean().item()
-
-            # update parameters for G
-            optim_G.step()
-
             print("epoch:{}/{},n_batch:{}/{},loss_real_D:{:.4},loss_fake_D:{:.4},loss_G:{:.4}".format(
                 epoch, n_epochs, i, len(dataloader), loss_D_real_mean, loss_D_fake_mean, loss_G_mean))
 
