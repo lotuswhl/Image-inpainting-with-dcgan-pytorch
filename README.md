@@ -47,5 +47,6 @@ naive_dcgan_main.py: error: the following arguments are required: --dataset, --d
 ### some results for naive_dcgan_main
 #### 25epoch results on cifar10:  
 ![cifar10 25 epoch samples](https://raw.githubusercontent.com/lotuswhl/Image-inpainting-with-dcgan-pytorch/master/images/sample_fake_images/sample_fake_images_epoch024-cifar10.png)  
+#### 20 epoch for celeba
 
 

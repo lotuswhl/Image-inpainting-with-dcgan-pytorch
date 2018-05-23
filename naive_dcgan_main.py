@@ -248,7 +248,7 @@ def train(n_epochs):
             # compute loss for G
             loss_G = criteria(batch_output_G, batch_labels)
             # compute gradient for G
-            loss_G.backward()
+            loss_G.backward(retain_graph=True)
 
             loss_G_mean = loss_G.mean().item()
 
