@@ -19,7 +19,7 @@ from models.naive_dcgan import *
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--dataset", required=True,
-                    help="specify one of : cifar10|mnist|lsun|imagenet|custom_dataset|lfw|fake")
+                    help="specify one of : cifar10|mnist|celeba|lsun|imagenet|custom_dataset|lfw|fake")
 
 parser.add_argument("--dataset_root", required=True,
                     help="root dir to dataset")
@@ -93,7 +93,7 @@ if torch.cuda.is_available() and not args.cuda:
     print("WANGING: you have a cuda device available,you may specify --cuda to enable it.")
 
 # prepare datasets
-if args.dataset in ["imagenet", "lfw", "custom_dataset"]:
+if args.dataset in ["imagenet", "lfw", "custom_dataset","celeba"]:
     dataset = datasets.ImageFolder(root=args.dataset_root, transform=transforms.Compose([
         transforms.Resize(args.image_size),
         transforms.CenterCrop(args.image_size),
