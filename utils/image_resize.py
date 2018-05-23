@@ -20,6 +20,8 @@ if args.saved_dir != "":
     saved_dir = args.saved_dir
 else:
     saved_dir = os.path.join(args.images_root,"resize_images")
+    if not os.path.exists(saved_dir):
+        os.makedirs(saved_dir)
 
 source_dir = os.path.join(args.images_root,args.images_subdir)
 
