@@ -94,7 +94,7 @@ if torch.cuda.is_available() and not args.cuda:
 
 # prepare datasets
 if args.dataset in ["imagenet", "lfw", "custom_dataset","celeba"]:
-    dataset = datasets.ImageFolder(root=args.dataset_root, transform=transforms.Compose([
+    dataset = datasets.ImageFolder(args.dataset_root, transform=transforms.Compose([
         transforms.Resize(args.image_size),
         transforms.CenterCrop(args.image_size),
         transforms.ToTensor(),
