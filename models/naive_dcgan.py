@@ -6,10 +6,10 @@ def init_weights(nn_model):
     class_name = nn_model.__class__.__name__
     # convolutional layer weight initialization
     if class_name.find("Conv") != -1:
-        nn_model.weight.data.normal_(0.0, 0.05)
+        nn_model.weight.data.normal_(0.0, 0.01)
     # bacthnorm layer weight initilization
     elif class_name.find("BatchNrom") != -1:
-        nn_model.weight.data.normal_(1.0, 0.05)
+        nn_model.weight.data.normal_(0.8, 0.01)
         nn_model.bias.data.fill_(0)
 
 
