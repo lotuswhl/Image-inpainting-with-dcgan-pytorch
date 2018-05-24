@@ -5,7 +5,7 @@ project on image impatining based on context error with pytorch.with exploration
 
 [✓] implement naive dcgan with pytorch.
 
-[ ] fully test dcgan-pytorch
+[✓] fully test dcgan-pytorch
 
 [ ] modify dcgan-pytorch to image impainting mission.
 
@@ -24,8 +24,10 @@ project on image impatining based on context error with pytorch.with exploration
 * packages : see requirements.txt
 
 # Usage
-## First install the required packages
-## Usage of naive_dcgan_main.py
+> Please make sure you have installed the required packages
+
+## DCGAN Usage
+### Usage of naive_dcgan_main.py
 This follows the original deep convolutional gan implementation.  you can use 
 ```
 python3 naive_dcgan_main.py 
@@ -47,6 +49,9 @@ naive_dcgan_main.py: error: the following arguments are required: --dataset, --d
 ### some results for naive_dcgan_main
 #### 25epoch results on cifar10:  
 ![cifar10 25 epoch samples](https://raw.githubusercontent.com/lotuswhl/Image-inpainting-with-dcgan-pytorch/master/images/sample_fake_images/sample_fake_images_epoch024-cifar10.png)  
-#### 20 epoch for celeba
+#### 25 epoch results for celeba
+![celeba 25 epoch samples](https://raw.githubusercontent.com/lotuswhl/Image-inpainting-with-dcgan-pytorch/master/images/sample_fake_images/sample_fake_images_epoch024_celeba.png)
 
+**Please be noticed that the training process for celeba is unstable, mostly due to gan's problem, if you have the parameter in a well state ,you comes into a good result,or otherwise. SHOULD BE IMPROVED LATER ON**
 
+## Image inpainting Usage
