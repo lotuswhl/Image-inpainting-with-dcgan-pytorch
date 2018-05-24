@@ -190,7 +190,7 @@ label_fake = 0
 optim_G = optim.Adam(generator.parameters(), lr=args.lr,
                      betas=(args.beta1, 0.999))
 optim_D = optim.Adam(discriminator.parameters(),
-                     lr=args.lr, betas=(args.beta1, 0.999))
+                     lr=args.lr*0.5, betas=(args.beta1, 0.999))
 
 
 def train(n_epochs):
