@@ -27,7 +27,7 @@ project on image impatining based on context error with pytorch.with exploration
 > Please make sure you have installed the required packages
 
 ## DCGAN Usage
-### Usage of naive_dcgan_main.py
+### Usage of naive_dcgan_train.py
 This follows the original deep convolutional gan implementation.  you can use 
 ```
 python3 naive_dcgan_main.py 
