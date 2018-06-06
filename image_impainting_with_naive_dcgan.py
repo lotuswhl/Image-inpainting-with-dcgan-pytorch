@@ -1,4 +1,11 @@
 # --*-- coding:utf-8 --*--
+"""image impainting use naive dcgan"""
+
+import sys
+from boto.auth import sha256
+sys.path.append(".")
+from models.naive_dcgan import Generator, Discriminator, init_weights
+from utils.image_utils import get_image_from_path
 from __future__ import print_function
 import os
 import argparse
@@ -10,23 +17,12 @@ import torch.backends.cudnn as cudnn
 import torch.optim as optim
 import torch.nn as nn
 import torchvision.utils as tvutils
-import sys
+import numpy as np
+
 import random
-sys.path.append(".")
-from models.naive_dcgan import *
-    
 
 # define argument parser
 parser = argparse.ArgumentParser()
-
-parser.add_argument("--dataset", required=True,
-                    help="specify one of : cifar10|mnist|celeba|lsun|imagenet|custom_dataset|lfw|fake")
-
-parser.add_argument("--dataset_root", required=True,
-                    help="root dir to dataset")
-
-parser.add_argument("--num_workers", type=int, default=4,
-                    help="number of workers to load data")
 
 parser.add_argument("--batch_size", type=int, default=64,
                     help="your input batch size")
@@ -43,14 +39,11 @@ parser.add_argument("--num_gf", type=int, default=64,
 parser.add_argument("--num_df", type=int, default=64,
                     help="number of discriminator network filter factor")
 
-parser.add_argument("--num_epochs", type=int, default=25,
-                    help="number of training epochs of the dataset")
+parser.add_argument("--num_iters", type=int, default=1000,
+                    help="number of iterations form image impainting optimization")
 
-parser.add_argument("--lr", type=float, default=0.0002,
-                    help="learning rate , default is 0.0002")
-
-parser.add_argument("--beta1", type=float, default=0.5,
-                    help="beta1 parameter for adam optimizer,default : 0.5")
+parser.add_argument("--lr", type=float, default=0.01,
+                    help="learning rate for adjusting gradient of z, default is 0.01")
 
 parser.add_argument("--cuda", action="store_true",
                     help="enable cuda accelerating")
@@ -59,16 +52,19 @@ parser.add_argument("--num_gpus", type=int, default=1,
                     help="number of gpus to use")
 
 parser.add_argument("--output_dir", default=".",
-                    help="directory path to output images and checkpoint files ...")
+                    help="directory path to output intermediate images and impainted images")
 
-parser.add_argument("--netG_path", default="",
-                    help="file path to G network,to continue training ")
+parser.add_argument("--netG_path", required=True,
+                    help="file path to G network,to generate the patches ")
 
-parser.add_argument("--netD_path", default="",
-                    help="file path to D network,to continue training")
+parser.add_argument("--netD_path", required=True,
+                    help="file path to D network,to impainting for more real image")
 
 parser.add_argument("--random_seed", type=int,
                     help="you can specify the random seed if you want")
+
+parser.add_argument("--aligned_images", type=str, narg="+",
+                    help="input source aligned images for mask and impainting")
 
 args = parser.parse_args()
 
@@ -91,43 +87,7 @@ random.seed(args.random_seed)
 torch.manual_seed(args.random_seed)
 
 if torch.cuda.is_available() and not args.cuda:
-    print("WANGING: you have a cuda device available,you may specify --cuda to enable it.")
-
-# prepare datasets
-# for these dataset,you should put dataset images in sub-directory;
-# for example: for celebA,root=~/dataset/celebA ;then images should lie in ~/dataset/celebA/celebA/
-if args.dataset in ["imagenet", "lfw", "custom_dataset","celeba"]:
-    dataset = datasets.ImageFolder(args.dataset_root, transform=transforms.Compose([
-        transforms.Resize(args.image_size),
-        transforms.CenterCrop(args.image_size),
-        transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-    ]))
-# below ,we can use dataset from torchvision directly
-elif args.dataset == "lsun":
-    dataset = datasets.LSUN(root=args.dataset_root, classes=['bedroom_train'], transform=transforms.Compose([
-        transforms.Resize(args.image_size),
-        transforms.CenterCrop(args.image_size),
-        transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-    ]))
-elif args.dataset == "cifar10":
-    dataset = datasets.CIFAR10(root=args.dataset_root, download=True, transform=transforms.Compose([
-        transforms.Resize(args.image_size),
-        transforms.CenterCrop(args.image_size),
-        transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-    ]))
-elif args.dataset == "fake":
-    dataset = datasets.FakeData(image_size=(
-        3, args.image_size, args.image_size), transform=transforms.ToTensor())
-
-# make sure dataset have been initialized properly
-assert dataset
-
-# dataset if ready,and we need dataloader
-dataloader = tutils.data.DataLoader(
-    dataset, batch_size=args.batch_size, shuffle=True, num_workers=int(args.num_workers))
+    print("Info: you have a cuda device available,you may specify --cuda to enable it.")
 
 # device setting
 device = torch.device("cuda:0") if args.cuda else torch.device("cpu")
@@ -138,9 +98,7 @@ num_gf = int(args.num_gf)
 
 num_df = int(args.num_df)
 
-num_epochs = int(args.num_epochs)
-
-num_workers = int(args.num_workers)
+num_iters = int(args.num_iters)
 
 z_dim = int(args.z_dim)
 
@@ -170,31 +128,64 @@ generator.apply(init_weights)
 discriminator.apply(init_weights)
 
 # load net state if exists
-if args.netG_path != "":
-    generator.load_state_dict(torch.load(args.netG_path))
-if args.netD_path != "":
-    discriminator.load_state_dict(torch.load(args.netD_path))
+print("load trained state dict from local files...")
+generator.load_state_dict(torch.load(args.netG_path))
+discriminator.load_state_dict(torch.load(args.netD_path))
+print("generator and discriminator state dict loaded, done.")
 
 print("Generator Info:")
 print(generator)
 print("Discriminator Info:")
 print(discriminator)
 
-criteria = nn.BCELoss()
+# 初始化潜变量z，这个z的目的是匹配待修补的一个batch的图像在generator的底层分布来源
+z = torch.randn(args.batch_size, z_dim, 1, 1).to(device)
 
-# every time we will use this to sample from generator, so that we can compare the performance of training
-sample_batch_z = torch.randn(args.batch_size, z_dim, 1, 1).to(device)
-
-label_real = 1
-label_fake = 0
-
-optim_G = optim.Adam(generator.parameters(), lr=args.lr,
-                     betas=(args.beta1, 0.999))
-optim_D = optim.Adam(discriminator.parameters(),
-                     lr=args.lr*0.5, betas=(args.beta1, 0.999))
+image_shape = [args.image_size, args.image_size, num_channels]
 
 
-def train(n_epochs):
+def impainting(n_epochs):
+    # 创建输出文件夹
+    output_dir = args.output_dir
+    source_imagedir = os.path.join(output_dir, "source_images")
+    masked_imagedir = os.path.join(output_dir, "masked_images")
+    impainted_imagedir = os.path.join(output_dir, "impainted_images")
+    os.makedirs(source_imagedir, exist_ok=True)
+    os.makedirs(masked_imagedir)
+    os.makedirs(impainted_imagedir)
+
+    # 总共需要修复多少图片
+    num_images = len(args.aligned_images)
+    # 总共可以分为多少的batch来进行处理
+    num_batches = int(np.ceil(num_images / args.batch_size))
+
+    for idx in range(num_batches):
+        # 对于每一个batch的图片进行如下处理
+        lidx = idx * args.batch_size
+        hidx = min(num_images, (idx + 1) * args.batch_size)
+        realBatchSize = hidx - lidx
+
+        batch_images = [get_image_from_path(imgpath) for imgpath in args.aligned_images[lidx:hidx]]
+        batch_images = np.array(batch_images).astype(np.float32)
+        if realBatchSize < args.batch_size:
+            print("number of batch images : ", realBatchSize)
+            # 如果需要修补的图片没有一个batch那么多，用0来填充
+            batch_images = np.pad(batch_images, [(0, args.batch_size - realBatchSize), (0, 0), (0, 0), (0, 0)], "constant")
+            batch_images = batch_images.astype(np.float32)
+        
+        # 输入的原始图片已经准备好，开始准备mask
+        # 暂时只提供中心mask
+        mask = np.ones(shape=image_shape)
+        imageCenterScale = 0.25
+        lm = args.image_size * imageCenterScale
+        hm = args.image_size * (1 - imageCenterScale)
+        # 将图像中心mask为0
+        mask[lm:hm, lm:hm, :] = 0.0
+        masked_batch_images = np.multiply(batch_images, mask)
+
+        real_rows = np.ceil(realBatchSize / 8)
+        real_cols = min(8, realBatchSize)
+
     for epoch in range(n_epochs):
         for i, data in enumerate(dataloader, 0):
             # first update discriminator's parameters
@@ -264,13 +255,8 @@ def train(n_epochs):
                 tvutils.save_image(
                     real_batch_data, "%s/sample_real.png" % args.output_dir, normalize=True)
                 fake_batch_images = generator(sample_batch_z)
-                tvutils.save_image(fake_batch_images.detach(), "%s/sample_fake_images_epoch%03d_%s.png" %
-                                   (args.output_dir, epoch,args.dataset), normalize=True)
-
-        torch.save(discriminator.state_dict(),
-                   "%s/discriminator_epoch_%03d.pth" % (args.output_dir, epoch))
-        torch.save(generator.state_dict(),
-                   "%s/generator_epoch_%03d.pth" % (args.output_dir, epoch))
+                tvutils.save_image(fake_batch_images.detach(), "%s/sample_fake_images_epoch%03d_%s.png" % 
+                                   (args.output_dir, epoch, args.dataset), normalize=True)
 
 
 if __name__ == "__main__":
