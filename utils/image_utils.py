@@ -16,7 +16,10 @@ def image_to_tensor(image):
     """
     将输入的PIL Image对象转为pytorch的Tensor对象,channelximage_heightximage_width格式
     """
-    trans = transforms.Compose([transforms.ToTensor()])
+    trans = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+    ])
     return trans(image)
 
 def get_tensor_image(path):
