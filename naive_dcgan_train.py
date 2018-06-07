@@ -262,10 +262,10 @@ def train(n_epochs):
             if i % 100 == 0:
                 # sample every 100 batch
                 tvutils.save_image(
-                    real_batch_data, "%s/sample_real.png" % args.output_dir, normalize=True)
+                    real_batch_data, "%s/sample_real.png" % args.output_dir, normalize=False)
                 fake_batch_images = generator(sample_batch_z)
                 tvutils.save_image(fake_batch_images.detach(), "%s/sample_fake_images_epoch%03d_%s.png" %
-                                   (args.output_dir, epoch,args.dataset), normalize=True)
+                                   (args.output_dir, epoch,args.dataset), normalize=False)
 
         torch.save(discriminator.state_dict(),
                    "%s/discriminator_epoch_%03d.pth" % (args.output_dir, epoch))
