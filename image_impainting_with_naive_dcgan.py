@@ -222,7 +222,7 @@ def impainting():
             
             total_loss = loss_context + lamd*loss_perceptual
             print("\r batch {} : iteration : {:4} , context_loss:{:.4f},percptual_loss:{:4f}".format(idx,iteration,loss_context,loss_perceptual),end="")
-            total_loss.backward(retain_graph=True)
+            total_loss.backward()
             opt.step()
 #             g = z_hat.grad
 #             if g is None:
