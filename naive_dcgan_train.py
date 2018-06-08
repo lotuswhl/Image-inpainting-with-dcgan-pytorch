@@ -70,6 +70,12 @@ parser.add_argument("--netD_path", default="",
 parser.add_argument("--random_seed", type=int,
                     help="you can specify the random seed if you want")
 
+parser.add_argument("--nrow", type=int,default=8,
+                    help="number of images to save in a row,default is 8")
+
+parser.add_argument("--n_sample_per_n_batches", type=int,default=100,
+                    help="sample every {n_sample_per_n_batches} batches,default 100")
+
 args = parser.parse_args()
 
 print("custom arguments:", args)
@@ -140,7 +146,11 @@ num_df = int(args.num_df)
 
 num_epochs = int(args.num_epochs)
 
+nrow = int(args.nrow)
+
 num_workers = int(args.num_workers)
+
+n_sample_per_n_batches = int(args.n_sample_per_n_batches)
 
 z_dim = int(args.z_dim)
 
@@ -249,7 +259,7 @@ def train(n_epochs):
             # compute loss for G
             loss_G = criteria(batch_output_G, batch_labels)
             # compute gradient for G
-            loss_G.backward(retain_graph=True)
+            loss_G.backward()
 
             loss_G_mean = loss_G.mean().item()
 
@@ -259,13 +269,13 @@ def train(n_epochs):
             print("epoch:{}/{},n_batch:{}/{},loss_real_D:{:.4},loss_fake_D:{:.4},loss_G:{:.4}".format(
                 epoch, n_epochs, i, len(dataloader), loss_D_real_mean, loss_D_fake_mean, loss_G_mean))
 
-            if i % 100 == 0:
+            if i % n_sample_per_n_batches == 0:
                 # sample every 100 batch
                 tvutils.save_image(
-                    real_batch_data, "%s/sample_real.png" % args.output_dir, normalize=False)
+                    real_batch_data, "%s/sample_real.png" % args.output_dir, nrow=nrow,normalize=True)
                 fake_batch_images = generator(sample_batch_z)
                 tvutils.save_image(fake_batch_images.detach(), "%s/sample_fake_images_epoch%03d_%s.png" %
-                                   (args.output_dir, epoch,args.dataset), normalize=False)
+                                   (args.output_dir, epoch,args.dataset),nrow=nrow, normalize=True)
 
         torch.save(discriminator.state_dict(),
                    "%s/discriminator_epoch_%03d.pth" % (args.output_dir, epoch))
