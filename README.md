@@ -11,13 +11,6 @@ project on image impatining based on context error with pytorch.with exploration
 
 [✓] modify dcgan-pytorch to image impainting mission.
 
-[ ] tranform naive dcgan-pytorch to w-dcgan-pytorch
-
-[ ] fully test w-dcgan-pytorch
-
-[ ] transform image-impainting-with-dcgan to image-impainting-with-wgan
-
-[ ] fully test image-impainting-wgan
 
 # requirements
 * python3
